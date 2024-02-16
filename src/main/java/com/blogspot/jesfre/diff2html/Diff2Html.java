@@ -47,14 +47,28 @@ public class Diff2Html {
 		System.out.println("Generated HTML: " + file);
 	}
 
+	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("d/M/yyyy h:m:s a");
+	private String htmlFilenamePrefix = "";
+	private String htmlFilenameSuffix = "";
+
+	public Diff2Html() {
+	}
+
+	public Diff2Html(String htmlFilenamePrefix, String htmlFilenameSuffix) {
+		this.htmlFilenamePrefix = htmlFilenamePrefix;
+		this.htmlFilenameSuffix = htmlFilenameSuffix;
+	}
+
 	public String processDiff(String workingDirPath, String javaFileLocation, String diffPath) {
 		File afterChangesFile = new File(javaFileLocation);
 		File diffFile = new File(diffPath);
-		String fileName = FilenameUtils.getBaseName(diffPath);
-		File htmlFile = new File(workingDirPath + SLASH + CODE_DIFF_FOLDER + SLASH + fileName + ".html");
+		String fileName = FilenameUtils.getName(javaFileLocation);
+		// TODO generate new filename, if Java, remove extension, otherwise don't
+		String htmlFilePath = workingDirPath + SLASH + CODE_DIFF_FOLDER + SLASH + htmlFilenamePrefix + fileName + htmlFilenameSuffix + ".html";
+		File htmlFile = new File(htmlFilePath);
 		String htmlContent = null;
 		try {
-			htmlContent = new Diff2Html().toHtml(afterChangesFile, diffFile, javaFileLocation);
+			htmlContent = this.toHtml(afterChangesFile, diffFile, javaFileLocation);
 		} catch (IOException e1) {
 			System.out.println("Cannot process file " + diffFile.getName());
 			e1.printStackTrace();
@@ -72,7 +86,7 @@ public class Diff2Html {
 	}
 
 	private String toHtml(File javaFile, File diffFile, String workspaceFileLocation) throws IOException {
-		DifferenceContent difference = getDifferences(javaFile, diffFile);
+		DifferenceContent difference = populateDifferences(javaFile, diffFile);
 		String producedDate = DATE_FORMAT.format(new Date());
 		String leftRev = workspaceFileLocation.replace(".java", "_" + difference.getLeftRevision() + ".java");
 		String rightRev = workspaceFileLocation.replace(".java", "_" + difference.getRightRevision() + ".java");
@@ -89,7 +103,7 @@ public class Diff2Html {
 		return htmlContent;
 	}
 
-	private DifferenceContent getDifferences(File javaFile, File diffFile) throws IOException {
+	private DifferenceContent populateDifferences(File javaFile, File diffFile) throws IOException {
 		DifferenceContent difference = new DifferenceContent();
 		List<String> originalCodeLines = (List<String>) FileUtils.readLines(javaFile);
 
