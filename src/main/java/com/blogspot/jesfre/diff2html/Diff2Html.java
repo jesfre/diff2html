@@ -1,16 +1,16 @@
-package com.blogspot.jesfre.codediff.generator;
+package com.blogspot.jesfre.diff2html;
 
-import static com.blogspot.jesfre.codediff.generator.BlockType.BLOCK_END;
-import static com.blogspot.jesfre.codediff.generator.BlockType.BLOCK_INIT;
-import static com.blogspot.jesfre.codediff.generator.BlockType.NO_BLOCK;
-import static com.blogspot.jesfre.codediff.generator.BlockType.SINGLE_LINE;
-import static com.blogspot.jesfre.codediff.generator.DiffConstants.BLANK_SP;
-import static com.blogspot.jesfre.codediff.generator.DiffConstants.CODE_DIFF_FOLDER;
-import static com.blogspot.jesfre.codediff.generator.DiffConstants.SLASH;
-import static com.blogspot.jesfre.codediff.generator.DiffConstants.TAB_SPS;
-import static com.blogspot.jesfre.codediff.generator.DiffType.BOTH;
-import static com.blogspot.jesfre.codediff.generator.DiffType.LEFT;
-import static com.blogspot.jesfre.codediff.generator.DiffType.RIGHT;
+import static com.blogspot.jesfre.diff2html.BlockType.BLOCK_END;
+import static com.blogspot.jesfre.diff2html.BlockType.BLOCK_INIT;
+import static com.blogspot.jesfre.diff2html.BlockType.NO_BLOCK;
+import static com.blogspot.jesfre.diff2html.BlockType.SINGLE_LINE;
+import static com.blogspot.jesfre.diff2html.DiffConstants.BLANK_SP;
+import static com.blogspot.jesfre.diff2html.DiffConstants.CODE_DIFF_FOLDER;
+import static com.blogspot.jesfre.diff2html.DiffConstants.SLASH;
+import static com.blogspot.jesfre.diff2html.DiffConstants.TAB_SPS;
+import static com.blogspot.jesfre.diff2html.DiffType.BOTH;
+import static com.blogspot.jesfre.diff2html.DiffType.LEFT;
+import static com.blogspot.jesfre.diff2html.DiffType.RIGHT;
 import static com.blogspot.jesfre.velocity.utils.VelocityTemplateProcessor.getProcessor;
 
 import java.io.File;

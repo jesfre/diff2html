@@ -1,7 +1,7 @@
-package com.blogspot.jesfre.codediff.generator;
+package com.blogspot.jesfre.diff2html;
 
-import static com.blogspot.jesfre.codediff.generator.DiffConstants.CODE_DIFF_FOLDER;
-import static com.blogspot.jesfre.codediff.generator.DiffConstants.SLASH;
+import static com.blogspot.jesfre.diff2html.DiffConstants.CODE_DIFF_FOLDER;
+import static com.blogspot.jesfre.diff2html.DiffConstants.SLASH;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +23,7 @@ import com.blogspot.jesfre.svn.utils.SvnLogExtractor;
 public class Diff2HtmlRunner {
 
 	// ----------- SET -----------------------
-	private static final String SETUP_FILE = "C:/xutilities/src/com/blogspot/jesfre/codediff/generator/resources/Diff2HtmlRunner_setup.txt";
+	private static final String SETUP_FILE = "C:/xutilities/src/com/blogspot/jesfre/diff2html/resources/Diff2HtmlRunner_setup.txt";
 	private static final String BAT_FILENAME_TEMPLATE = "svn_diff_commands_%s.bat";
 	private static final String SVN_BASE_URL = "http://ussltccsw2601.solutions.glbsnet.com/svn/IES_WP/branches/IES_BATCH/Code/";
 	private static final String SVN_EXPORT_CMD_TEMPLATE = "svn export URL_FILE \"OUTPUT_DIRECTORY/EXPORTED_JAVA_FILENAME\"";

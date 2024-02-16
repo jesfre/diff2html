@@ -1,4 +1,4 @@
-package com.blogspot.jesfre.codediff.generator;
+package com.blogspot.jesfre.diff2html;
 
 public class DifferenceLine {
 	private BlockType blockType = BlockType.NO_BLOCK;

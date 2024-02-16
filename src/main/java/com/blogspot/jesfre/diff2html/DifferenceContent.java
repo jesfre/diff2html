@@ -1,4 +1,4 @@
-package com.blogspot.jesfre.codediff.generator;
+package com.blogspot.jesfre.diff2html;
 
 import java.util.ArrayList;
 import java.util.List;

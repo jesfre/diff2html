@@ -1,7 +1,7 @@
-package com.blogspot.jesfre.codediff.generator;
+package com.blogspot.jesfre.diff2html;
 
 public class DiffConstants {
-	public static final String TEMPLATE_FOLDER = "C:/xutilities/src/com/blogspot/jesfre/codediff/generator/resources";
+	public static final String TEMPLATE_FOLDER = "C:/xutilities/src/com/blogspot/jesfre/diff2html/resources";
 	public static final String CODE_DIFF_FOLDER = "code-diff";
 	public static final String SLASH = System.getProperty("file.separator");
 
