@@ -37,7 +37,6 @@ import com.blogspot.jesfre.velocity.utils.VelocityTemplateProcessor;
  * Feb 5, 2024
  */
 public class Diff2Html {
-	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("d/M/yyyy h:m:s a");
 
 	public static void main(String[] args) {
 		String workingDir = "/path/do/any/code-diff-generator/workingdirectory";
