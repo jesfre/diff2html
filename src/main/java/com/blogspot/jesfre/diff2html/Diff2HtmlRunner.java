@@ -138,9 +138,7 @@ public class Diff2HtmlRunner {
 			List<SvnLog> logList = fileRevisionListMap.get(file);
 			if (logList.size() > 0) {
 				headRev = logList.get(0).getRevision();
-			}
-			if (logList.size() > 1) {
-				prevRev = logList.get(1).getRevision();
+				prevRev = logList.get(logList.size() - 1).getRevision();
 			}
 			String outDiffFile = codeDiffOutputFolder + SLASH + originalFileName + "_r" + headRev + "-r" + prevRev + ".diff";
 			new SvnDiff().exportDiff(formatPath(file), formatPath(outDiffFile), headRev, prevRev);
