@@ -31,9 +31,8 @@ import com.blogspot.jesfre.svn.utils.SvnLogExtractor;
 public class Diff2HtmlRunner {
 
 	// ----------- SET -----------------------
-	private static final String SETUP_FILE = "C:/xutilities/src/com/blogspot/jesfre/diff2html/resources/Diff2HtmlRunner_setup.txt";
 	private static final String BAT_FILENAME_TEMPLATE = "svn_diff_commands_%s.bat";
-	private static final String SVN_BASE_URL = "http://ussltccsw2601.solutions.glbsnet.com/svn/IES_WP/branches/IES_BATCH/Code/";
+	private static final String SVN_BASE_URL = "some SVN URL";
 	private static final String DEFAULT_HTML_NAME_PREFIX = "";
 	private static final String DEFAULT_HTML_NAME_SUFFIX = "_Code_Diff";
 	private static boolean cmdFileBasedExecution = false;
@@ -41,10 +40,14 @@ public class Diff2HtmlRunner {
 	private String workingDir = "";
 
 	public static void main(String[] args) throws Exception {
+		if (args.length == 0) {
+			throw new IllegalArgumentException("Setup file was not provided.");
+		}
+		String setupFilePath = args[0];
 		// Load configuration and generates .bat file for svn commands
-		System.out.println("Loading Diff2Html settings from " + SETUP_FILE);
+		System.out.println("Loading Diff2Html settings from " + setupFilePath);
 		Diff2HtmlRunner diff2HtmlRunner = new Diff2HtmlRunner();
-		CodeDiffGeneratorSettings runnerSettings = diff2HtmlRunner.loadSettingsProperties(SETUP_FILE);
+		CodeDiffGeneratorSettings runnerSettings = diff2HtmlRunner.loadSettingsProperties(setupFilePath);
 
 		// Run svn command to get list-of-revisions or latest two commit revisions
 		System.out.println("Getting files revisions...");
@@ -136,6 +139,10 @@ public class Diff2HtmlRunner {
 			if (logList.size() > 0) {
 				headRev = logList.get(0).getRevision();
 				prevRev = logList.get(logList.size() - 1).getRevision();
+				if (prevRev > 1) {
+					// Compare with the revision before the list last entry's revision number
+					prevRev = prevRev - 1;
+				}
 			}
 			String outDiffFile = settings.getReportOutputLocation() + SLASH + originalFileName + "_r" + headRev + "-r" + prevRev + ".diff";
 			new SvnDiff().exportDiff(formatPath(file), formatPath(outDiffFile), headRev, prevRev);
