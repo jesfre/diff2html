@@ -55,7 +55,8 @@ public class Diff2HtmlRunner {
 		SvnLogExtractor versionExtractor = new SvnLogExtractor("TBD", runnerSettings.getReportOutputLocation());
 		for (String javaFile : runnerSettings.getAnalyzingFileDiffFileMap().keySet()) {
 			List<SvnLog> logList = versionExtractor
-					.withLimit(2)
+					// .withLimit(2)
+					.withComment(runnerSettings.getJiraTicket())
 					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
 					.clearTempFiles(true)
 					.exportLog(false)
@@ -68,7 +69,7 @@ public class Diff2HtmlRunner {
 		if (cmdFileBasedExecution) {
 			diff2HtmlRunner.generateDiffFilesCommandFileDriven(runnerSettings, fileSvnLogMap);
 		} else {
-			diff2HtmlRunner.generateDiffFiles(runnerSettings, fileSvnLogMap);
+			diff2HtmlRunner.generateDiffFiles(runnerSettings, fileSvnLogMap, false);
 		}
 
 		// Generate HTML files
@@ -110,7 +111,8 @@ public class Diff2HtmlRunner {
 		return settings;
 	}
 
-	private void generateDiffFiles(CodeDiffGeneratorSettings settings, Map<String, List<SvnLog>> fileRevisionListMap) throws Exception {
+	private void generateDiffFiles(CodeDiffGeneratorSettings settings, Map<String, List<SvnLog>> fileRevisionListMap,
+			boolean exportHeadFileFromRepo) throws Exception {
 		Set<String> fileList = settings.getAnalyzingFileDiffFileMap().keySet();
 		for (String rawLine : fileList) {
 			String file = rawLine.contains("|") ? rawLine.substring(0, rawLine.indexOf("|")) : rawLine;
@@ -119,8 +121,10 @@ public class Diff2HtmlRunner {
 			String cName = FilenameUtils.getBaseName(rawLine);
 			String exportedFileFromSvn = cName + "_HEAD." + originalFileType;
 
-			String fileExportedFromRepo = settings.getReportOutputLocation() + "/" + exportedFileFromSvn;
-			new SvnExport().export(file, formatPath(fileExportedFromRepo));
+			if (exportHeadFileFromRepo) {
+				String fileExportedFromRepo = settings.getReportOutputLocation() + "/" + exportedFileFromSvn;
+				new SvnExport().export(file, formatPath(fileExportedFromRepo));
+			}
 
 			// TODO to validate with new files where there is one single revision
 			if (!fileRevisionListMap.containsKey(file)) {
