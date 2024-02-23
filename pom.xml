@@ -4,7 +4,7 @@
 	<groupId>com.blogspot.jesfre</groupId>
 	<artifactId>diff2html</artifactId>
 	<version>0.5-SNAPSHOT</version>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>commons-lang</groupId>
@@ -17,6 +17,11 @@
 			<version>1.3.2</version>
 		</dependency>
 		<dependency>
+			<groupId>commons-configuration</groupId>
+			<artifactId>commons-configuration</artifactId>
+			<version>1.6</version>
+		</dependency>
+		<dependency>
 			<groupId>com.blogspot.jesfre</groupId>
 			<artifactId>utilities</artifactId>
 			<version>0.6</version>
@@ -24,7 +29,11 @@
 	</dependencies>
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
-		<resources><resource><directory>src/main/resources</directory></resource></resources>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>

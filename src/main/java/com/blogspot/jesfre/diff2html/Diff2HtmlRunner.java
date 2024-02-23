@@ -7,6 +7,8 @@ import static com.blogspot.jesfre.svn.utils.SvnLogExtractor.CommandExecutionMode
 import static com.blogspot.jesfre.svn.utils.SvnLogExtractor.CommandExecutionMode.DIRECT_COMMAND;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +16,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
@@ -38,18 +42,23 @@ public class Diff2HtmlRunner {
 
 	public static void main(String[] args) throws Exception {
 		// Load configuration and generates .bat file for svn commands
-		System.out.println("Loading Diff2Html Runner settings...");
+		System.out.println("Loading Diff2Html settings from " + SETUP_FILE);
 		Diff2HtmlRunner diff2HtmlRunner = new Diff2HtmlRunner();
-		CodeDiffGeneratorSettings runnerSettings = diff2HtmlRunner.loadSettingsFile(SETUP_FILE);
+		CodeDiffGeneratorSettings runnerSettings = diff2HtmlRunner.loadSettingsProperties(SETUP_FILE);
 
 		// Run svn command to get list-of-revisions or latest two commit revisions
 		System.out.println("Getting files revisions...");
+		File codeDiffFolder = new File(runnerSettings.getReportOutputLocation());
+		codeDiffFolder.mkdirs();
+
 		Map<String, List<SvnLog>> fileSvnLogMap = new HashMap<String, List<SvnLog>>();
 		SvnLogExtractor versionExtractor = new SvnLogExtractor("TBD", runnerSettings.getReportOutputLocation());
 		for (String javaFile : runnerSettings.getAnalyzingFileDiffFileMap().keySet()) {
 			List<SvnLog> logList = versionExtractor
 					.withLimit(2)
 					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
+					.clearTempFiles(true)
+					.exportLog(false)
 					.analyze(javaFile).extract();
 			fileSvnLogMap.put(javaFile, logList);
 		}
@@ -65,59 +74,43 @@ public class Diff2HtmlRunner {
 		// Generate HTML files
 		System.out.println("Generating HTML diff files...");
 		for (Entry<String, String> e : runnerSettings.getAnalyzingFileDiffFileMap().entrySet()) {
-			new Diff2Html(DEFAULT_HTML_NAME_PREFIX, DEFAULT_HTML_NAME_SUFFIX + "-v" + runnerSettings.getVersion())
-					.processDiff(diff2HtmlRunner.workingDir, e.getKey(), e.getValue());
+			String htmlPath = new Diff2Html(DEFAULT_HTML_NAME_PREFIX, DEFAULT_HTML_NAME_SUFFIX + "-v" + runnerSettings.getVersion())
+					.processDiff(runnerSettings.getReportOutputLocation(), e.getKey(), e.getValue());
+			new File(e.getValue()).deleteOnExit();
+			System.out.println("Generated " + htmlPath);
 		}
 		System.out.println("Done.");
 	}
 
-	public CodeDiffGeneratorSettings loadSettingsFile(String setupFileLocation) throws Exception {
-		// TODO buffer the file reading to avoid out-of-memory errors
-		List<String> lines = FileUtils.readLines(new File(setupFileLocation));
-		String project = null;
-		String ticket = null;
-		String version = null;
-		int lnNum = 0;
-		if (lines.size() > 0) {
-			project = StringUtils.remove(lines.get(lnNum++), "PROJECT:");
-			version = StringUtils.remove(lines.get(lnNum++), "JIRA_TICKET:");
-			version = StringUtils.remove(lines.get(lnNum++), "VERSION:");
-			workingDir = StringUtils.remove(lines.get(lnNum++), "WORKING_DIRECTORY:");
-		} else {
-			throw new Exception("Setup file is empty.");
-		}
+	@SuppressWarnings("unchecked")
+	public CodeDiffGeneratorSettings loadSettingsProperties(String setupFileLocation) throws FileNotFoundException, IOException, ConfigurationException {
+		PropertiesConfiguration config = new PropertiesConfiguration();
+		config.setListDelimiter('|');
+		config.load(setupFileLocation);
+		String workingDir = config.getString("workingDirectory");
+
+		CodeDiffGeneratorSettings settings = new CodeDiffGeneratorSettings();
+		settings.setProject(config.getString("project", "no_project"));
+		settings.setJiraTicket(config.getString("jira.ticket", ""));
+		settings.setVersion(config.getString("review.version", "1"));
+		settings.setWorkingDirPath(workingDir);
 
 		String outputFolderPath = workingDir + SLASH + CODE_DIFF_FOLDER;
-		CodeDiffGeneratorSettings settings = new CodeDiffGeneratorSettings();
-		settings.setProject(project);
-		settings.setJiraTicket(ticket);
-		settings.setVersion(version);
-		settings.setWorkingDirPath(workingDir);
-		// settings.setCommandFile(newFileName); // No command to be generated at this point
 		settings.setReportOutputLocation(outputFolderPath);
 
-		// Create content for .bat file
-		System.out.println("Reading files...");
-		int filesFound = 0;
-		lnNum++; // To skip FILE_LIST_BELOW
-		for (; lnNum < lines.size(); lnNum++) {
-			String f = lines.get(lnNum);
-			if (f.startsWith("#") || f.startsWith("//") || StringUtils.isBlank(f)) {
-				continue;
-			}
-			String file = f.contains("|") ? f.substring(0, f.indexOf("|")) : f;
-			// TODO handle revision
-			String revision = f.contains("|") ? f.substring(f.indexOf("|") + 1) : "";
+		List<String> fileList = config.getList("file");
+		for (String file : fileList) {
 			settings.putAnalyzingFile(file);
-			filesFound++;
 		}
-		System.out.println("Files found: " + filesFound);
+		List<String> fList = config.getList("f");
+		for (String file : fList) {
+			settings.putAnalyzingFile(file);
+		}
 
 		return settings;
 	}
 
 	private void generateDiffFiles(CodeDiffGeneratorSettings settings, Map<String, List<SvnLog>> fileRevisionListMap) throws Exception {
-		String codeDiffOutputFolder = settings.getWorkingDirPath() + SLASH + CODE_DIFF_FOLDER;
 		Set<String> fileList = settings.getAnalyzingFileDiffFileMap().keySet();
 		for (String rawLine : fileList) {
 			String file = rawLine.contains("|") ? rawLine.substring(0, rawLine.indexOf("|")) : rawLine;
@@ -126,7 +119,7 @@ public class Diff2HtmlRunner {
 			String cName = FilenameUtils.getBaseName(rawLine);
 			String exportedFileFromSvn = cName + "_HEAD." + originalFileType;
 
-			String fileExportedFromRepo = codeDiffOutputFolder + "/" + exportedFileFromSvn;
+			String fileExportedFromRepo = settings.getReportOutputLocation() + "/" + exportedFileFromSvn;
 			new SvnExport().export(file, formatPath(fileExportedFromRepo));
 
 			// TODO to validate with new files where there is one single revision
@@ -140,7 +133,7 @@ public class Diff2HtmlRunner {
 				headRev = logList.get(0).getRevision();
 				prevRev = logList.get(logList.size() - 1).getRevision();
 			}
-			String outDiffFile = codeDiffOutputFolder + SLASH + originalFileName + "_r" + headRev + "-r" + prevRev + ".diff";
+			String outDiffFile = settings.getReportOutputLocation() + SLASH + originalFileName + "_r" + headRev + "-r" + prevRev + ".diff";
 			new SvnDiff().exportDiff(formatPath(file), formatPath(outDiffFile), headRev, prevRev);
 
 			settings.getAnalyzingFileDiffFileMap().put(file, outDiffFile);
@@ -148,7 +141,6 @@ public class Diff2HtmlRunner {
 	}
 
 	private void generateDiffFilesCommandFileDriven(CodeDiffGeneratorSettings settings, Map<String, List<SvnLog>> fileRevisionListMap) throws Exception {
-		String codeDiffOutputFolder = settings.getWorkingDirPath() + SLASH + CODE_DIFF_FOLDER;
 		Set<String> fileList = settings.getAnalyzingFileDiffFileMap().keySet();
 		List<String> resultContent = new ArrayList<String>();
 		for (String rawLine : fileList) {
@@ -158,9 +150,8 @@ public class Diff2HtmlRunner {
 			String originalFileType = FilenameUtils.getExtension(rawLine);
 			String cName = FilenameUtils.getBaseName(rawLine);
 			String exportedFileFromSvn = cName + "_HEAD." + originalFileType;
-			String urlFile = SVN_BASE_URL + file;
 
-			String fileExportedFromRepo = codeDiffOutputFolder + "/" + exportedFileFromSvn;
+			String fileExportedFromRepo = settings.getReportOutputLocation() + "/" + exportedFileFromSvn;
 			String cmdExportCommand = new SvnExport().getCommand(file, formatPath(fileExportedFromRepo));
 			resultContent.add(cmdExportCommand);
 			resultContent.add("echo");
@@ -178,7 +169,7 @@ public class Diff2HtmlRunner {
 			if (logList.size() > 1) {
 				prevRev = logList.get(1).getRevision();
 			}
-			String outDiffFile = codeDiffOutputFolder + SLASH + originalFileName + "_r" + headRev + "-r" + prevRev + ".diff";
+			String outDiffFile = settings.getReportOutputLocation() + SLASH + originalFileName + "_r" + headRev + "-r" + prevRev + ".diff";
 			SvnDiff svnDiff = new SvnDiff();
 			String svnDiffCommand = svnDiff.getCommand(formatPath(file), formatPath(outDiffFile), headRev, prevRev);
 			resultContent.add(svnDiffCommand);

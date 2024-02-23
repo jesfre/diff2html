@@ -1,7 +1,6 @@
 package com.blogspot.jesfre.diff2html;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**

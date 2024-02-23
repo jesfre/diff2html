@@ -5,7 +5,6 @@ import static com.blogspot.jesfre.diff2html.BlockType.BLOCK_INIT;
 import static com.blogspot.jesfre.diff2html.BlockType.NO_BLOCK;
 import static com.blogspot.jesfre.diff2html.BlockType.SINGLE_LINE;
 import static com.blogspot.jesfre.diff2html.DiffConstants.BLANK_SP;
-import static com.blogspot.jesfre.diff2html.DiffConstants.CODE_DIFF_FOLDER;
 import static com.blogspot.jesfre.diff2html.DiffConstants.SLASH;
 import static com.blogspot.jesfre.diff2html.DiffConstants.TAB_SPS;
 import static com.blogspot.jesfre.diff2html.DiffType.BOTH;
@@ -58,16 +57,16 @@ public class Diff2Html {
 		this.htmlFilenameSuffix = htmlFilenameSuffix;
 	}
 
-	public String processDiff(String workingDirPath, String javaFileLocation, String diffPath) {
-		File afterChangesFile = new File(javaFileLocation);
+	public String processDiff(String workingDirPath, String svnManagedFilePath, String diffPath) {
+		File afterChangesFile = new File(svnManagedFilePath);
 		File diffFile = new File(diffPath);
-		String fileName = FilenameUtils.getName(javaFileLocation);
+		String fileName = FilenameUtils.getName(svnManagedFilePath);
 		// TODO generate new filename, if Java, remove extension, otherwise don't
-		String htmlFilePath = workingDirPath + SLASH + CODE_DIFF_FOLDER + SLASH + htmlFilenamePrefix + fileName + htmlFilenameSuffix + ".html";
+		String htmlFilePath = workingDirPath + SLASH + htmlFilenamePrefix + fileName + htmlFilenameSuffix + ".html";
 		File htmlFile = new File(htmlFilePath);
 		String htmlContent = null;
 		try {
-			htmlContent = this.toHtml(afterChangesFile, diffFile, javaFileLocation);
+			htmlContent = this.toHtml(afterChangesFile, diffFile, svnManagedFilePath);
 		} catch (IOException e1) {
 			System.out.println("Cannot process file " + diffFile.getName());
 			e1.printStackTrace();
