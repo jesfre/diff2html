@@ -120,8 +120,14 @@ public class Diff2Html {
 		difference.setLeftRevision(Long.valueOf(leftRev));
 
 		String rightRev = iterator.nextLine();
-		rightRev = rightRev.substring(rightRev.indexOf("(revision ") + 10, rightRev.indexOf(")"));
-		difference.setRightRevision(Long.valueOf(rightRev));
+		if(rightRev.trim().endsWith("(nonexistent)")) {
+			// Is first revision of the file
+			difference.setRightRevision(Long.valueOf(leftRev));
+		} else {
+			rightRev = rightRev.substring(rightRev.indexOf("(revision ") + 10, rightRev.indexOf(")"));
+			difference.setRightRevision(Long.valueOf(rightRev));
+		}
+
 
 		int blockNum = 0;
 		int leftLinePosition = 0;
