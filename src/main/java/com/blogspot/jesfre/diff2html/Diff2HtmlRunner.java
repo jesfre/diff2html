@@ -64,6 +64,9 @@ public class Diff2HtmlRunner {
 					.clearTempFiles(true)
 					.exportLog(false)
 					.analyze(javaFile).extract();
+			if(logList.size() == 0) {
+				System.err.println("No log found for " + javaFile + " using comment " + runnerSettings.getJiraTicket());
+			}
 			fileSvnLogMap.put(javaFile, logList);
 		}
 		
@@ -80,7 +83,7 @@ public class Diff2HtmlRunner {
 		for (Entry<String, String> e : runnerSettings.getAnalyzingFileDiffFileMap().entrySet()) {
 			String htmlPath = new Diff2Html(DEFAULT_HTML_NAME_PREFIX, DEFAULT_HTML_NAME_SUFFIX + "-v" + runnerSettings.getVersion())
 					.processDiff(runnerSettings.getReportOutputLocation(), e.getKey(), e.getValue());
-			new File(e.getValue()).deleteOnExit();
+			new File(e.getValue()).delete();
 			System.out.println("Generated " + htmlPath);
 		}
 		System.out.println("Done.");
