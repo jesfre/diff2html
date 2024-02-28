@@ -37,8 +37,6 @@ public class Diff2HtmlRunner {
 	private static final String DEFAULT_HTML_NAME_SUFFIX = "_Code_Diff";
 	private static boolean cmdFileBasedExecution = false;
 
-	private String workingDir = "";
-
 	public static void main(String[] args) throws Exception {
 		if (args.length == 0) {
 			throw new IllegalArgumentException("Setup file was not provided.");
@@ -159,7 +157,6 @@ public class Diff2HtmlRunner {
 		List<String> resultContent = new ArrayList<String>();
 		for (String rawLine : fileList) {
 			String file = rawLine.contains("|") ? rawLine.substring(0, rawLine.indexOf("|")) : rawLine;
-			String revision = rawLine.contains("|") ? rawLine.substring(rawLine.indexOf("|") + 1) : "";
 			String originalFileName = FilenameUtils.getName(rawLine);
 			String originalFileType = FilenameUtils.getExtension(rawLine);
 			String cName = FilenameUtils.getBaseName(rawLine);
@@ -179,9 +176,11 @@ public class Diff2HtmlRunner {
 			List<SvnLog> logList = fileRevisionListMap.get(file);
 			if (logList.size() > 0) {
 				headRev = logList.get(0).getRevision();
-			}
-			if (logList.size() > 1) {
-				prevRev = logList.get(1).getRevision();
+				prevRev = logList.get(logList.size() - 1).getRevision();
+				if (prevRev > 1) {
+					// Compare with the revision before the list last entry's revision number
+					prevRev = prevRev - 1;
+				}
 			}
 			String outDiffFile = settings.getReportOutputLocation() + SLASH + originalFileName + "_r" + headRev + "-r" + prevRev + ".diff";
 			SvnDiff svnDiff = new SvnDiff();
@@ -196,6 +195,7 @@ public class Diff2HtmlRunner {
 		// New batch file-name definition
 		Integer fileCount = 1;
 		// Create the code diff output folder
+		String workingDir = settings.getWorkingDirPath();
 		String outputFolderPath = workingDir + SLASH + CODE_DIFF_FOLDER;
 		File outputFolder = new File(outputFolderPath);
 		int folderCount = 0;
