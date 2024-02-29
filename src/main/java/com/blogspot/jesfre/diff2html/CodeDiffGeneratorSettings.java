@@ -9,6 +9,8 @@ import java.util.Map;
  */
 public class CodeDiffGeneratorSettings {
 
+	private String configFile;
+	private String htmlTemplate;
 	private String project;
 	private String jiraTicket;
 	private String version;
@@ -16,6 +18,22 @@ public class CodeDiffGeneratorSettings {
 	private String commandFile;
 	private String reportOutputLocation;
 	private Map<String, String> analyzingFileDiffFileMap = new HashMap<String, String>();
+
+	public String getConfigFile() {
+		return configFile;
+	}
+
+	public void setConfigFile(String configFile) {
+		this.configFile = configFile;
+	}
+
+	public String getHtmlTemplate() {
+		return htmlTemplate;
+	}
+
+	public void setHtmlTemplate(String htmlTemplate) {
+		this.htmlTemplate = htmlTemplate;
+	}
 
 	public String getProject() {
 		return project;

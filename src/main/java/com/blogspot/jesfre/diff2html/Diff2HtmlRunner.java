@@ -79,7 +79,7 @@ public class Diff2HtmlRunner {
 		// Generate HTML files
 		System.out.println("Generating HTML diff files...");
 		for (Entry<String, String> e : runnerSettings.getAnalyzingFileDiffFileMap().entrySet()) {
-			String htmlPath = new Diff2Html(DEFAULT_HTML_NAME_PREFIX, DEFAULT_HTML_NAME_SUFFIX + "-v" + runnerSettings.getVersion())
+			String htmlPath = new Diff2Html(runnerSettings, DEFAULT_HTML_NAME_PREFIX, DEFAULT_HTML_NAME_SUFFIX + "-v" + runnerSettings.getVersion())
 					.processDiff(runnerSettings.getReportOutputLocation(), e.getKey(), e.getValue());
 			new File(e.getValue()).delete();
 			System.out.println("Generated " + htmlPath);
@@ -95,9 +95,11 @@ public class Diff2HtmlRunner {
 		String workingDir = config.getString("workingDirectory");
 
 		CodeDiffGeneratorSettings settings = new CodeDiffGeneratorSettings();
+		settings.setConfigFile(setupFileLocation);
 		settings.setProject(config.getString("project", "no_project"));
 		settings.setJiraTicket(config.getString("jira.ticket", ""));
 		settings.setVersion(config.getString("review.version", "1"));
+		settings.setHtmlTemplate(config.getString("resource.htmlTemplate", ""));
 		settings.setWorkingDirPath(workingDir);
 
 		String outputFolderPath = workingDir + SLASH + CODE_DIFF_FOLDER;
@@ -110,6 +112,11 @@ public class Diff2HtmlRunner {
 		List<String> fList = config.getList("f");
 		for (String file : fList) {
 			settings.putAnalyzingFile(file);
+		}
+		
+		if(StringUtils.isBlank(settings.getHtmlTemplate())) {
+			System.out.println("Not HTML template file was provided. Using a default template.");
+			settings.setHtmlTemplate("DEFAULT");
 		}
 
 		return settings;

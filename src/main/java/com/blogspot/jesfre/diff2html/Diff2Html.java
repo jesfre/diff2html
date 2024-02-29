@@ -46,13 +46,15 @@ public class Diff2Html {
 	}
 
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("d/M/yyyy h:m:s a");
+	private CodeDiffGeneratorSettings settings = null; 
 	private String htmlFilenamePrefix = "";
 	private String htmlFilenameSuffix = "";
 
 	public Diff2Html() {
 	}
 
-	public Diff2Html(String htmlFilenamePrefix, String htmlFilenameSuffix) {
+	public Diff2Html(CodeDiffGeneratorSettings settings, String htmlFilenamePrefix, String htmlFilenameSuffix) {
+		this.settings = settings;
 		this.htmlFilenamePrefix = htmlFilenamePrefix;
 		this.htmlFilenameSuffix = htmlFilenameSuffix;
 	}
@@ -88,6 +90,22 @@ public class Diff2Html {
 		String producedDate = DATE_FORMAT.format(new Date());
 		String leftRev = workspaceFileLocation.replace(".java", "_" + difference.getLeftRevision() + ".java");
 		String rightRev = workspaceFileLocation.replace(".java", "_" + difference.getRightRevision() + ".java");
+		
+		String path;
+		String templateFilename;
+		if("DEFAULT".equals(settings.getHtmlTemplate())) {
+			// TODO set default
+			path = DiffConstants.TEMPLATE_FOLDER;
+			templateFilename = "diff-template.html";
+			// TODO Load template from JAR. Add this option in the VelocityTemplateProcessor.
+		} else {
+			path = FilenameUtils.getFullPath(settings.getHtmlTemplate());
+			templateFilename = FilenameUtils.getName(settings.getHtmlTemplate());
+			if(StringUtils.isBlank(path)) {
+				// Will try to use a template file located in the same directory as the configuration file  
+				path = FilenameUtils.getPath(settings.getConfigFile());
+			}
+		}
 
 		Map<String, Object> context = new HashMap<String, Object>();
 		context.put("javaFileName", workspaceFileLocation);
@@ -96,8 +114,8 @@ public class Diff2Html {
 		context.put("rightFile", rightRev);
 		context.put("difference", difference);
 
-		VelocityTemplateProcessor templateProcessor = getProcessor(DiffConstants.TEMPLATE_FOLDER);
-		String htmlContent = templateProcessor.process("diff-template.html", context);
+		VelocityTemplateProcessor templateProcessor = getProcessor(path);
+		String htmlContent = templateProcessor.process(templateFilename, context);
 		return htmlContent;
 	}
 
@@ -127,7 +145,6 @@ public class Diff2Html {
 			rightRev = rightRev.substring(rightRev.indexOf("(revision ") + 10, rightRev.indexOf(")"));
 			difference.setRightRevision(Long.valueOf(rightRev));
 		}
-
 
 		int blockNum = 0;
 		int leftLinePosition = 0;
