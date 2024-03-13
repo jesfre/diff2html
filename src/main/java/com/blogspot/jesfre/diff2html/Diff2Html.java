@@ -69,8 +69,8 @@ public class Diff2Html {
 		String htmlContent = null;
 		try {
 			htmlContent = this.toHtml(afterChangesFile, diffFile, svnManagedFilePath);
-		} catch (IOException e1) {
-			System.out.println("Cannot process file " + diffFile.getName());
+		} catch (Exception e1) {
+			System.out.println("Cannot generate HTML diff content for file " + diffFile.getName());
 			e1.printStackTrace();
 		}
 		if (StringUtils.isBlank(htmlContent)) {
@@ -78,7 +78,7 @@ public class Diff2Html {
 		}
 		try {
 			FileUtils.writeStringToFile(htmlFile, htmlContent);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			System.err.println("Cannot write HTML file " + htmlFile.getName());
 			e.printStackTrace();
 		}
@@ -88,6 +88,7 @@ public class Diff2Html {
 	private String toHtml(File javaFile, File diffFile, String workspaceFileLocation) throws IOException {
 		DifferenceContent difference = populateDifferences(javaFile, diffFile);
 		String producedDate = DATE_FORMAT.format(new Date());
+		// TODO change the ".java". Use FileNameUtils.getExtension() and other logic instead of lokking specifically for Java files
 		String leftRev = workspaceFileLocation.replace(".java", "_" + difference.getLeftRevision() + ".java");
 		String rightRev = workspaceFileLocation.replace(".java", "_" + difference.getRightRevision() + ".java");
 		

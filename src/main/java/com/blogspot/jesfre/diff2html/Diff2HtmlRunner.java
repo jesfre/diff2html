@@ -2,6 +2,7 @@ package com.blogspot.jesfre.diff2html;
 
 import static com.blogspot.jesfre.diff2html.DiffConstants.CODE_DIFF_FOLDER;
 import static com.blogspot.jesfre.diff2html.DiffConstants.SLASH;
+import static com.blogspot.jesfre.diff2html.DiffConstants.SOURCE_CODE_FOLDER;
 import static com.blogspot.jesfre.misc.PathUtils.formatPath;
 import static com.blogspot.jesfre.svn.utils.SvnLogExtractor.CommandExecutionMode.COMMAND_FILE;
 import static com.blogspot.jesfre.svn.utils.SvnLogExtractor.CommandExecutionMode.DIRECT_COMMAND;
@@ -9,8 +10,10 @@ import static com.blogspot.jesfre.svn.utils.SvnLogExtractor.CommandExecutionMode
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,9 +23,12 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
 import com.blogspot.jesfre.commandline.CommandLineRunner;
+import com.blogspot.jesfre.svn.ModifiedFile;
+import com.blogspot.jesfre.svn.OperationType;
 import com.blogspot.jesfre.svn.utils.SvnDiff;
 import com.blogspot.jesfre.svn.utils.SvnExport;
 import com.blogspot.jesfre.svn.utils.SvnLog;
@@ -35,7 +41,10 @@ public class Diff2HtmlRunner {
 	private static final String SVN_BASE_URL = "some SVN URL";
 	private static final String DEFAULT_HTML_NAME_PREFIX = "";
 	private static final String DEFAULT_HTML_NAME_SUFFIX = "_Code_Diff";
+	private static final OperationType[] OPERATIONS_TU_REVIEW = {OperationType.ADDED, OperationType.MERGED, OperationType.MODIFIED, OperationType.UPDATED};
+
 	private static boolean cmdFileBasedExecution = false;
+	private static boolean usingRepoUrl = false;
 
 	public static void main(String[] args) throws Exception {
 		if (args.length == 0) {
@@ -54,26 +63,58 @@ public class Diff2HtmlRunner {
 
 		Map<String, List<SvnLog>> fileSvnLogMap = new HashMap<String, List<SvnLog>>();
 		SvnLogExtractor versionExtractor = new SvnLogExtractor("TBD", runnerSettings.getReportOutputLocation());
-		for (String javaFile : runnerSettings.getAnalyzingFileDiffFileMap().keySet()) {
+
+		if(runnerSettings.getAnalyzingFileDiffFileMap().size() == 0 && StringUtils.isBlank(runnerSettings.getRepositoryBaseUrl())) {
+			throw new IllegalStateException("No files to be analyzed.");
+		}
+
+		if(runnerSettings.getAnalyzingFileDiffFileMap().size() == 0) {
+			usingRepoUrl = true;
+
+			String repoUrlString = runnerSettings.getRepositoryBaseUrl() + "/" + runnerSettings.getRepositoryWorkingBranch();
+			URL repoUrl = new URL(repoUrlString).toURI().normalize().toURL();
+
+			// Will discover the modified files from the repository
+			List<SvnLog> logList = versionExtractor
+					.withComment(runnerSettings.getJiraTicket())
+					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
+					.clearTempFiles(true)
+					.exportLog(false)
+					.listModifiedFiles(true)
+					.analyzeUrl(repoUrl).extract();
+			for(SvnLog log : logList) {
+				for(ModifiedFile mf : log.getModifiedFiles()) {
+					if(ArrayUtils.contains(OPERATIONS_TU_REVIEW, mf.getOperation())) {
+						String fileUrlString = runnerSettings.getRepositoryBaseUrl() + "/" + mf.getFile();
+						URL fileUrl = new URL(fileUrlString).toURI().normalize().toURL();
+						runnerSettings.putAnalyzingFile(fileUrl.toString());
+					}
+				}
+			}
+		}
+
+		// Using files from the configuration file
+		for (String analyzedFile : runnerSettings.getAnalyzingFileDiffFileMap().keySet()) {
 			List<SvnLog> logList = versionExtractor
 					// .withLimit(2)
 					.withComment(runnerSettings.getJiraTicket())
 					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
 					.clearTempFiles(true)
 					.exportLog(false)
-					.analyze(javaFile).extract();
+					.analyze(analyzedFile).extract();
+
 			if(logList.size() == 0) {
-				System.err.println("No log found for " + javaFile + " using comment " + runnerSettings.getJiraTicket());
+				System.err.println("No log found for " + analyzedFile + " using comment " + runnerSettings.getJiraTicket());
 			}
-			fileSvnLogMap.put(javaFile, logList);
+			fileSvnLogMap.put(analyzedFile, logList);
 		}
 		
 		// Execute svn commands to get .java and .diff files using latest two revisions
-		System.out.println("Generating SVN diff commands...");
+		System.out.println("Generating SVN diff files...");
 		if (cmdFileBasedExecution) {
 			diff2HtmlRunner.generateDiffFilesCommandFileDriven(runnerSettings, fileSvnLogMap);
 		} else {
-			diff2HtmlRunner.generateDiffFiles(runnerSettings, fileSvnLogMap, false);
+			diff2HtmlRunner.generateDiffFiles(runnerSettings, fileSvnLogMap, true);
 		}
 
 		// Generate HTML files
@@ -96,6 +137,8 @@ public class Diff2HtmlRunner {
 
 		CodeDiffGeneratorSettings settings = new CodeDiffGeneratorSettings();
 		settings.setConfigFile(setupFileLocation);
+		settings.setRepositoryBaseUrl(config.getString("repository.baseUrl", ""));
+		settings.setRepositoryWorkingBranch(config.getString("repository.workingBranch", ""));
 		settings.setProject(config.getString("project", "no_project"));
 		settings.setJiraTicket(config.getString("jira.ticket", ""));
 		settings.setVersion(config.getString("review.version", "1"));
@@ -123,19 +166,12 @@ public class Diff2HtmlRunner {
 	}
 
 	private void generateDiffFiles(CodeDiffGeneratorSettings settings, Map<String, List<SvnLog>> fileRevisionListMap,
-			boolean exportHeadFileFromRepo) throws Exception {
-		Set<String> fileList = settings.getAnalyzingFileDiffFileMap().keySet();
-		for (String rawLine : fileList) {
-			String file = rawLine.contains("|") ? rawLine.substring(0, rawLine.indexOf("|")) : rawLine;
-			String originalFileName = FilenameUtils.getName(rawLine);
-			String originalFileType = FilenameUtils.getExtension(rawLine);
-			String cName = FilenameUtils.getBaseName(rawLine);
-			String exportedFileFromSvn = cName + "_HEAD." + originalFileType;
-
-			if (exportHeadFileFromRepo) {
-				String fileExportedFromRepo = settings.getReportOutputLocation() + "/" + exportedFileFromSvn;
-				new SvnExport().export(file, formatPath(fileExportedFromRepo));
-			}
+			boolean exportFileFromRepo) throws Exception {
+		Set<String> fileList = new LinkedHashSet<String>(settings.getAnalyzingFileDiffFileMap().keySet());
+		for (String file : fileList) {
+			String originalFileName = FilenameUtils.getName(file);
+			String originalFileType = FilenameUtils.getExtension(file);
+			String cName = FilenameUtils.getBaseName(file);
 
 			// TODO to validate with new files where there is one single revision
 			if (!fileRevisionListMap.containsKey(file)) {
@@ -155,7 +191,31 @@ public class Diff2HtmlRunner {
 			String outDiffFile = settings.getReportOutputLocation() + SLASH + originalFileName + "_r" + headRev + "-r" + prevRev + ".diff";
 			new SvnDiff().exportDiff(formatPath(file), formatPath(outDiffFile), headRev, prevRev);
 
-			settings.getAnalyzingFileDiffFileMap().put(file, outDiffFile);
+			String exportedFilePath = null;
+			if (exportFileFromRepo) {
+				String sourFolderPath = settings.getWorkingDirPath() + SLASH + SOURCE_CODE_FOLDER;
+				File sourceFolder = new File(sourFolderPath);
+				sourceFolder.mkdirs();
+
+				String exportedFileName = cName + "_" + (headRev > 0 ? headRev : "HEAD") + "." + originalFileType;
+				exportedFilePath = sourFolderPath + SLASH + exportedFileName;
+				if(headRev > 0 ) {
+					new SvnExport()
+					//					.verbose(true)
+					.export(headRev, file, formatPath(exportedFilePath));
+				} else {
+					new SvnExport()
+					//					.verbose(true)
+					.exportHead(file, formatPath(exportedFilePath));
+				}
+
+				if(usingRepoUrl) {
+					// Replace the repository-file's URL with the local file location
+					settings.getAnalyzingFileDiffFileMap().remove(file);
+				}
+			}
+
+			settings.getAnalyzingFileDiffFileMap().put(exportedFilePath != null ? exportedFilePath : file, outDiffFile);
 		}
 	}
 

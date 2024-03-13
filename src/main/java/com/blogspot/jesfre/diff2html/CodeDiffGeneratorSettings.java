@@ -10,6 +10,8 @@ import java.util.Map;
 public class CodeDiffGeneratorSettings {
 
 	private String configFile;
+	private String repositoryBaseUrl;
+	private String repositoryWorkingBranch;
 	private String htmlTemplate;
 	private String project;
 	private String jiraTicket;
@@ -25,6 +27,22 @@ public class CodeDiffGeneratorSettings {
 
 	public void setConfigFile(String configFile) {
 		this.configFile = configFile;
+	}
+
+	public String getRepositoryBaseUrl() {
+		return repositoryBaseUrl;
+	}
+
+	public void setRepositoryBaseUrl(String repositoryUrl) {
+		this.repositoryBaseUrl = repositoryUrl;
+	}
+
+	public String getRepositoryWorkingBranch() {
+		return repositoryWorkingBranch;
+	}
+
+	public void setRepositoryWorkingBranch(String repositoryWorkingBranch) {
+		this.repositoryWorkingBranch = repositoryWorkingBranch;
 	}
 
 	public String getHtmlTemplate() {
@@ -102,7 +120,15 @@ public class CodeDiffGeneratorSettings {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("CodeDiffGeneratorSettings [project=");
+		builder.append("CodeDiffGeneratorSettings [configFile=");
+		builder.append(configFile);
+		builder.append(", repositoryBaseUrl=");
+		builder.append(repositoryBaseUrl);
+		builder.append(", repositoryWorkingBranch=");
+		builder.append(repositoryWorkingBranch);
+		builder.append(", htmlTemplate=");
+		builder.append(htmlTemplate);
+		builder.append(", project=");
 		builder.append(project);
 		builder.append(", jiraTicket=");
 		builder.append(jiraTicket);
