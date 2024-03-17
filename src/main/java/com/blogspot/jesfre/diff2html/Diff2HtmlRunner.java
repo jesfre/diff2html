@@ -78,6 +78,7 @@ public class Diff2HtmlRunner {
 			List<SvnLog> logList = versionExtractor
 					.withComment(runnerSettings.getJiraTicket())
 					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
+					.verbose(runnerSettings.isVerbose())
 					.clearTempFiles(true)
 					.exportLog(false)
 					.listModifiedFiles(true)
@@ -99,6 +100,7 @@ public class Diff2HtmlRunner {
 					// .withLimit(2)
 					.withComment(runnerSettings.getJiraTicket())
 					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
+					.verbose(runnerSettings.isVerbose())
 					.clearTempFiles(true)
 					.exportLog(false)
 					.analyze(analyzedFile).extract();
@@ -143,6 +145,7 @@ public class Diff2HtmlRunner {
 		settings.setJiraTicket(config.getString("jira.ticket", ""));
 		settings.setVersion(config.getString("review.version", "1"));
 		settings.setHtmlTemplate(config.getString("resource.htmlTemplate", ""));
+		settings.setVerbose(config.getBoolean("global.verbose", false));
 		settings.setWorkingDirPath(workingDir);
 
 		String outputFolderPath = workingDir + SLASH + CODE_DIFF_FOLDER;
@@ -201,11 +204,11 @@ public class Diff2HtmlRunner {
 				exportedFilePath = sourFolderPath + SLASH + exportedFileName;
 				if(headRev > 0 ) {
 					new SvnExport()
-					//					.verbose(true)
+					.verbose(settings.isVerbose())
 					.export(headRev, file, formatPath(exportedFilePath));
 				} else {
 					new SvnExport()
-					//					.verbose(true)
+					.verbose(settings.isVerbose())
 					.exportHead(file, formatPath(exportedFilePath));
 				}
 

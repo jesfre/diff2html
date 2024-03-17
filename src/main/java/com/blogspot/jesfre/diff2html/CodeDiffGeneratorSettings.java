@@ -13,6 +13,7 @@ public class CodeDiffGeneratorSettings {
 	private String repositoryBaseUrl;
 	private String repositoryWorkingBranch;
 	private String htmlTemplate;
+	private boolean verbose;
 	private String project;
 	private String jiraTicket;
 	private String version;
@@ -51,6 +52,14 @@ public class CodeDiffGeneratorSettings {
 
 	public void setHtmlTemplate(String htmlTemplate) {
 		this.htmlTemplate = htmlTemplate;
+	}
+
+	public boolean isVerbose() {
+		return verbose;
+	}
+
+	public void setVerbose(boolean verbose) {
+		this.verbose = verbose;
 	}
 
 	public String getProject() {
@@ -128,6 +137,8 @@ public class CodeDiffGeneratorSettings {
 		builder.append(repositoryWorkingBranch);
 		builder.append(", htmlTemplate=");
 		builder.append(htmlTemplate);
+		builder.append(", verbose=");
+		builder.append(verbose);
 		builder.append(", project=");
 		builder.append(project);
 		builder.append(", jiraTicket=");
