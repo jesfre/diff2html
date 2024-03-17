@@ -14,6 +14,7 @@ public class CodeDiffGeneratorSettings {
 	private String repositoryWorkingBranch;
 	private String htmlTemplate;
 	private boolean verbose;
+	private boolean overwriteFiles;
 	private String project;
 	private String jiraTicket;
 	private String version;
@@ -60,6 +61,14 @@ public class CodeDiffGeneratorSettings {
 
 	public void setVerbose(boolean verbose) {
 		this.verbose = verbose;
+	}
+
+	public boolean isOverwriteFiles() {
+		return overwriteFiles;
+	}
+
+	public void setOverwriteFiles(boolean overwriteFiles) {
+		this.overwriteFiles = overwriteFiles;
 	}
 
 	public String getProject() {
@@ -139,6 +148,8 @@ public class CodeDiffGeneratorSettings {
 		builder.append(htmlTemplate);
 		builder.append(", verbose=");
 		builder.append(verbose);
+		builder.append(", overwriteFiles=");
+		builder.append(overwriteFiles);
 		builder.append(", project=");
 		builder.append(project);
 		builder.append(", jiraTicket=");

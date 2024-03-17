@@ -78,7 +78,6 @@ public class Diff2HtmlRunner {
 			List<SvnLog> logList = versionExtractor
 					.withComment(runnerSettings.getJiraTicket())
 					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
-					.verbose(runnerSettings.isVerbose())
 					.clearTempFiles(true)
 					.exportLog(false)
 					.listModifiedFiles(true)
@@ -100,7 +99,6 @@ public class Diff2HtmlRunner {
 					// .withLimit(2)
 					.withComment(runnerSettings.getJiraTicket())
 					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
-					.verbose(runnerSettings.isVerbose())
 					.clearTempFiles(true)
 					.exportLog(false)
 					.analyze(analyzedFile).extract();
@@ -110,7 +108,7 @@ public class Diff2HtmlRunner {
 			}
 			fileSvnLogMap.put(analyzedFile, logList);
 		}
-		
+
 		// Execute svn commands to get .java and .diff files using latest two revisions
 		System.out.println("Generating SVN diff files...");
 		if (cmdFileBasedExecution) {
@@ -146,6 +144,7 @@ public class Diff2HtmlRunner {
 		settings.setVersion(config.getString("review.version", "1"));
 		settings.setHtmlTemplate(config.getString("resource.htmlTemplate", ""));
 		settings.setVerbose(config.getBoolean("global.verbose", false));
+		settings.setOverwriteFiles(config.getBoolean("global.overwriteFiles", false));
 		settings.setWorkingDirPath(workingDir);
 
 		String outputFolderPath = workingDir + SLASH + CODE_DIFF_FOLDER;
@@ -159,7 +158,7 @@ public class Diff2HtmlRunner {
 		for (String file : fList) {
 			settings.putAnalyzingFile(file);
 		}
-		
+
 		if(StringUtils.isBlank(settings.getHtmlTemplate())) {
 			System.out.println("Not HTML template file was provided. Using a default template.");
 			settings.setHtmlTemplate("DEFAULT");
@@ -191,6 +190,7 @@ public class Diff2HtmlRunner {
 					prevRev = prevRev - 1;
 				}
 			}
+
 			String outDiffFile = settings.getReportOutputLocation() + SLASH + originalFileName + "_r" + headRev + "-r" + prevRev + ".diff";
 			new SvnDiff().exportDiff(formatPath(file), formatPath(outDiffFile), headRev, prevRev);
 
@@ -205,10 +205,12 @@ public class Diff2HtmlRunner {
 				if(headRev > 0 ) {
 					new SvnExport()
 					.verbose(settings.isVerbose())
+					.overwriteFile(settings.isOverwriteFiles())
 					.export(headRev, file, formatPath(exportedFilePath));
 				} else {
 					new SvnExport()
 					.verbose(settings.isVerbose())
+					.overwriteFile(settings.isOverwriteFiles())
 					.exportHead(file, formatPath(exportedFilePath));
 				}
 
@@ -257,7 +259,7 @@ public class Diff2HtmlRunner {
 			String svnDiffCommand = svnDiff.getCommand(formatPath(file), formatPath(outDiffFile), headRev, prevRev);
 			resultContent.add(svnDiffCommand);
 			resultContent.add("echo");
-			
+
 			settings.getAnalyzingFileDiffFileMap().put(file, outDiffFile);
 		}
 		resultContent.add("exit 0");
