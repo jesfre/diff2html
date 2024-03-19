@@ -32,9 +32,9 @@ import org.apache.commons.lang.StringUtils;
 import com.blogspot.jesfre.velocity.utils.VelocityTemplateProcessor;
 
 /**
- * @author <a href="mailto:jorge.ruiz.aquino@gmail.com">Jorge Ruiz Aquino</a>
- * Feb 5, 2024
- */
+ * @author <a href="mailto:jorge.ruiz.aquino@gmail.com">Jorge Ruiz Aquino</a>
+ * Feb 5, 2024
+ */
 public class Diff2Html {
 
 	public static void main(String[] args) {
@@ -70,7 +70,7 @@ public class Diff2Html {
 		try {
 			htmlContent = this.toHtml(afterChangesFile, diffFile, svnManagedFilePath);
 		} catch (Exception e1) {
-			System.out.println("Cannot generate HTML diff content for file " + diffFile.getName());
+			System.out.println("Cannot generate HTML diff content for file " + diffFile.getName() + " and " + afterChangesFile.getName());
 			e1.printStackTrace();
 		}
 		if (StringUtils.isBlank(htmlContent)) {
@@ -91,7 +91,7 @@ public class Diff2Html {
 		// TODO change the ".java". Use FileNameUtils.getExtension() and other logic instead of lokking specifically for Java files
 		String leftRev = workspaceFileLocation.replace(".java", "_" + difference.getLeftRevision() + ".java");
 		String rightRev = workspaceFileLocation.replace(".java", "_" + difference.getRightRevision() + ".java");
-		
+
 		String path;
 		String templateFilename;
 		if("DEFAULT".equals(settings.getHtmlTemplate())) {
@@ -147,29 +147,30 @@ public class Diff2Html {
 			difference.setRightRevision(Long.valueOf(rightRev));
 		}
 
+
 		int blockNum = 0;
 		int leftLinePosition = 0;
 		int leftNumberOfLines = 0;
 		int rightLinePosition = 0;
 		int rightNumberOfLines = 0;
 		int maxLeftIndexProcessedInPrevBlock = 0;
-		
+
 		List<String> leftStringList = new ArrayList<String>();
 		List<String> rightStringList = new ArrayList<String>();
 		while (iterator.hasNext()) {
 			String line = iterator.nextLine();
-			
+
 			if (line.startsWith(DiffConstants.BLOCK)) {
 				// Example where line = "@@ -1923,32 +1919,38 @@"
 				String startLineLeft = line.substring(line.indexOf('-') + 1, line.indexOf(','));
 				leftLinePosition = Integer.valueOf(startLineLeft.trim());
-				
+
 				String leftNumberOfLinesStr = line.substring(line.indexOf(',') + 1, line.indexOf('+'));
 				leftNumberOfLines = Integer.valueOf(leftNumberOfLinesStr.trim());
-				
+
 				String startLineRight = line.substring(line.indexOf('+') + 1, line.lastIndexOf(','));
 				rightLinePosition = Integer.valueOf(startLineRight.trim());
-				
+
 				String rightNumberOfLinesStr = line.substring(line.lastIndexOf(',') + 1, line.lastIndexOf("@@"));
 				rightNumberOfLines = Integer.valueOf(rightNumberOfLinesStr.trim());
 
@@ -265,7 +266,7 @@ public class Diff2Html {
 			} else {
 				lastDiffIndex = -1;
 			}
-			
+
 			if (diffType == RIGHT && lastDiffIndex >= 0) {
 				// This should be BOTH. Move this RIGHT lines above.
 				DifferenceLine prevLine = null;
@@ -292,7 +293,7 @@ public class Diff2Html {
 			}
 		}
 	}
-	
+
 	private void updateBlockTypes(DifferenceContent difference) {
 		// Set first line of the file as BLOCK_INIT
 		DifferenceLine firstLine = difference.getLines().get(0);
