@@ -50,11 +50,9 @@ public class Diff2HtmlRunner {
 		if (args.length == 0) {
 			throw new IllegalArgumentException("Setup file was not provided.");
 		}
-		String setupFilePath = args[0];
-		// Load configuration and generates .bat file for svn commands
-		System.out.println("Loading Diff2Html settings from " + setupFilePath);
+
 		Diff2HtmlRunner diff2HtmlRunner = new Diff2HtmlRunner();
-		CodeDiffGeneratorSettings runnerSettings = diff2HtmlRunner.loadSettingsProperties(setupFilePath);
+		CodeDiffGeneratorSettings runnerSettings = diff2HtmlRunner.loadSettingsProperties(args);
 
 		// Run svn command to get list-of-revisions or latest two commit revisions
 		System.out.println("Getting files revisions...");
@@ -129,34 +127,66 @@ public class Diff2HtmlRunner {
 	}
 
 	@SuppressWarnings("unchecked")
-	public CodeDiffGeneratorSettings loadSettingsProperties(String setupFileLocation) throws FileNotFoundException, IOException, ConfigurationException {
-		PropertiesConfiguration config = new PropertiesConfiguration();
-		config.setListDelimiter('|');
-		config.load(setupFileLocation);
-		String workingDir = config.getString("workingDirectory");
-
+	public CodeDiffGeneratorSettings loadSettingsProperties(String[] setupFileLocations) throws FileNotFoundException, IOException, ConfigurationException {
 		CodeDiffGeneratorSettings settings = new CodeDiffGeneratorSettings();
-		settings.setConfigFile(setupFileLocation);
-		settings.setRepositoryBaseUrl(config.getString("repository.baseUrl", ""));
-		settings.setRepositoryWorkingBranch(config.getString("repository.workingBranch", ""));
-		settings.setProject(config.getString("project", "no_project"));
-		settings.setJiraTicket(config.getString("jira.ticket", ""));
-		settings.setVersion(config.getString("review.version", "1"));
-		settings.setHtmlTemplate(config.getString("resource.htmlTemplate", ""));
-		settings.setVerbose(config.getBoolean("global.verbose", false));
-		settings.setOverwriteFiles(config.getBoolean("global.overwriteFiles", false));
-		settings.setWorkingDirPath(workingDir);
 
-		String outputFolderPath = workingDir + SLASH + CODE_DIFF_FOLDER;
-		settings.setReportOutputLocation(outputFolderPath);
+		for(int i=0; i<setupFileLocations.length; i++) {
+			String setupFilePath = setupFileLocations[i];
+			System.out.println("Loading Diff2Html settings from " + setupFilePath);
 
-		List<String> fileList = config.getList("file");
-		for (String file : fileList) {
-			settings.putAnalyzingFile(file);
-		}
-		List<String> fList = config.getList("f");
-		for (String file : fList) {
-			settings.putAnalyzingFile(file);
+			PropertiesConfiguration config = new PropertiesConfiguration();
+			config.setListDelimiter('|');
+			config.load(setupFilePath);
+
+			if(i == 0) {
+				// Only stores the location of the 1st configuration file
+				settings.setConfigFile(setupFilePath);
+			}
+			if(config.containsKey("repository.baseUrl")) {
+				settings.setRepositoryBaseUrl(config.getString("repository.baseUrl", ""));
+			}
+			if(config.containsKey("repository.workingBranch")) {
+				settings.setRepositoryWorkingBranch(config.getString("repository.workingBranch", ""));
+			}
+			if(config.containsKey("project")) {
+				settings.setProject(config.getString("project", "no_project"));
+			}
+			if(config.containsKey("jira.ticket")) {
+				settings.setJiraTicket(config.getString("jira.ticket", ""));
+			}
+			if(config.containsKey("review.version")) {
+				settings.setVersion(config.getString("review.version", "1"));
+			}
+			if(config.containsKey("resource.htmlTemplate")) {
+				settings.setHtmlTemplate(config.getString("resource.htmlTemplate", ""));
+			}
+			if(config.containsKey("global.verbose")) {
+				settings.setVerbose(config.getBoolean("global.verbose", false));
+			}
+			if(config.containsKey("global.overwriteFiles")) {
+				settings.setOverwriteFiles(config.getBoolean("global.overwriteFiles", false));
+			}
+
+			if(config.containsKey("workingDirectory")) {
+				String workingDir = config.getString("workingDirectory");
+				settings.setWorkingDirPath(workingDir);
+
+				String outputFolderPath = workingDir + SLASH + CODE_DIFF_FOLDER;
+				settings.setReportOutputLocation(outputFolderPath);
+			}
+
+			if(config.containsKey("file")) {
+				List<String> fileList = config.getList("file");
+				for (String file : fileList) {
+					settings.putAnalyzingFile(file);
+				}
+			}
+			if(config.containsKey("f")) {
+				List<String> fList = config.getList("f");
+				for (String file : fList) {
+					settings.putAnalyzingFile(file);
+				}
+			}
 		}
 
 		if(StringUtils.isBlank(settings.getHtmlTemplate())) {
@@ -214,13 +244,14 @@ public class Diff2HtmlRunner {
 					.exportHead(file, formatPath(exportedFilePath));
 				}
 
-				if(usingRepoUrl) {
-					// Replace the repository-file's URL with the local file location
-					settings.getAnalyzingFileDiffFileMap().remove(file);
-				}
 			}
-
-			settings.getAnalyzingFileDiffFileMap().put(exportedFilePath != null ? exportedFilePath : file, outDiffFile);
+			if(!usingRepoUrl && exportedFilePath != null) {
+				// Replace the configured file path with the exported file location
+				settings.getAnalyzingFileDiffFileMap().remove(file);
+				settings.getAnalyzingFileDiffFileMap().put(exportedFilePath, outDiffFile);
+			} else {
+				settings.getAnalyzingFileDiffFileMap().put(file, outDiffFile);
+			}
 		}
 	}
 
