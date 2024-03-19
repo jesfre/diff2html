@@ -42,6 +42,7 @@ public class Diff2HtmlRunner {
 	private static final String DEFAULT_HTML_NAME_PREFIX = "";
 	private static final String DEFAULT_HTML_NAME_SUFFIX = "_Code_Diff";
 	private static final OperationType[] OPERATIONS_TU_REVIEW = {OperationType.ADDED, OperationType.MERGED, OperationType.MODIFIED, OperationType.UPDATED};
+	private static final int MAX_MONTHS_SEARCH_IN_PAST = 12;
 
 	private static boolean cmdFileBasedExecution = false;
 	private static boolean usingRepoUrl = false;
@@ -76,6 +77,8 @@ public class Diff2HtmlRunner {
 			List<SvnLog> logList = versionExtractor
 					.withComment(runnerSettings.getJiraTicket())
 					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
+					.verbose(runnerSettings.isVerbose())
+					.lookMonthsBack(MAX_MONTHS_SEARCH_IN_PAST)
 					.clearTempFiles(true)
 					.exportLog(false)
 					.listModifiedFiles(true)
@@ -97,6 +100,8 @@ public class Diff2HtmlRunner {
 					// .withLimit(2)
 					.withComment(runnerSettings.getJiraTicket())
 					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
+					.verbose(runnerSettings.isVerbose())
+					.lookMonthsBack(MAX_MONTHS_SEARCH_IN_PAST)
 					.clearTempFiles(true)
 					.exportLog(false)
 					.analyze(analyzedFile).extract();
@@ -245,7 +250,7 @@ public class Diff2HtmlRunner {
 				}
 
 			}
-			if(!usingRepoUrl && exportedFilePath != null) {
+			if(exportedFilePath != null) {
 				// Replace the configured file path with the exported file location
 				settings.getAnalyzingFileDiffFileMap().remove(file);
 				settings.getAnalyzingFileDiffFileMap().put(exportedFilePath, outDiffFile);
