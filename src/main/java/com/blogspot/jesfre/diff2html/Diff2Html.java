@@ -126,7 +126,7 @@ public class Diff2Html {
 
 		LineIterator iterator = IOUtils.lineIterator(new FileReader(diffFile));
 		if (!iterator.hasNext()) {
-			System.out.println("No differences found!");
+			System.out.println("No differences found in file " + diffFile.getName());
 			return difference;
 		}
 		String fname = iterator.nextLine();
