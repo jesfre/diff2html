@@ -3,7 +3,7 @@ package com.blogspot.jesfre.diff2html;
 public class DiffConstants {
 	public static final String TEMPLATE_FOLDER = "C:/xutilities/src/com/blogspot/jesfre/diff2html/resources";
 	public static final String CODE_DIFF_FOLDER = "code-diff";
-	public static final String SOURCE_CODE_FOLDER = "source-code";
+	public static final String SOURCE_CODE_FOLDER = "sources";
 	public static final String SLASH = System.getProperty("file.separator");
 
 	public static final String ONLY_IN = "Only in";

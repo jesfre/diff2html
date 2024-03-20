@@ -226,15 +226,16 @@ public class Diff2HtmlRunner {
 				}
 			}
 
-			String outDiffFile = settings.getReportOutputLocation() + SLASH + originalFileName + "_r" + headRev + "-r" + prevRev + ".diff";
+			String sourFolderPath = settings.getWorkingDirPath() + SLASH + SOURCE_CODE_FOLDER;
+			String outDiffFile = sourFolderPath + SLASH + originalFileName + "_r" + headRev + "-r" + prevRev + ".diff";
+
+			File sourceFolder = new File(sourFolderPath);
+			sourceFolder.mkdirs();
+
 			new SvnDiff().exportDiff(formatPath(file), formatPath(outDiffFile), headRev, prevRev);
 
 			String exportedFilePath = null;
 			if (exportFileFromRepo) {
-				String sourFolderPath = settings.getWorkingDirPath() + SLASH + SOURCE_CODE_FOLDER;
-				File sourceFolder = new File(sourFolderPath);
-				sourceFolder.mkdirs();
-
 				String exportedFileName = cName + "_" + (headRev > 0 ? headRev : "HEAD") + "." + originalFileType;
 				exportedFilePath = sourFolderPath + SLASH + exportedFileName;
 				if(headRev > 0 ) {
