@@ -41,7 +41,7 @@ public class Diff2HtmlRunner {
 	private static final String SVN_BASE_URL = "some SVN URL";
 	private static final String DEFAULT_HTML_NAME_PREFIX = "";
 	private static final String DEFAULT_HTML_NAME_SUFFIX = "_Code_Diff";
-	private static final OperationType[] OPERATIONS_TU_REVIEW = {OperationType.ADDED, OperationType.MERGED, OperationType.MODIFIED, OperationType.UPDATED};
+	private static final OperationType[] OPERATIONS_TO_REVIEW = {OperationType.ADDED, OperationType.MERGED, OperationType.MODIFIED, OperationType.UPDATED};
 	private static final int MAX_MONTHS_SEARCH_IN_PAST = 12;
 
 	private static boolean cmdFileBasedExecution = false;
@@ -85,11 +85,18 @@ public class Diff2HtmlRunner {
 					.analyzeUrl(repoUrl).extract();
 			for(SvnLog log : logList) {
 				for(ModifiedFile mf : log.getModifiedFiles()) {
-					if(ArrayUtils.contains(OPERATIONS_TU_REVIEW, mf.getOperation())) {
+					if(ArrayUtils.contains(OPERATIONS_TO_REVIEW, mf.getOperation())) {
 						String fileUrlString = runnerSettings.getRepositoryBaseUrl() + "/" + mf.getFile();
 						URL fileUrl = new URL(fileUrlString).toURI().normalize().toURL();
 						runnerSettings.putAnalyzingFile(fileUrl.toString());
 					}
+				}
+			}
+
+			if(runnerSettings.isVerbose() && !runnerSettings.getAnalyzingFileDiffFileMap().isEmpty()) {
+				System.out.println("Files committed with " + runnerSettings.getJiraTicket());
+				for(String fileFound : runnerSettings.getAnalyzingFileDiffFileMap().keySet()) {
+					System.out.println("- " + FilenameUtils.getName(fileFound));
 				}
 			}
 		}
@@ -143,10 +150,8 @@ public class Diff2HtmlRunner {
 			config.setListDelimiter('|');
 			config.load(setupFilePath);
 
-			if(i == 0) {
-				// Only stores the location of the 1st configuration file
-				settings.setConfigFile(setupFilePath);
-			}
+			settings.setConfigFile(setupFilePath);
+
 			if(config.containsKey("repository.baseUrl")) {
 				settings.setRepositoryBaseUrl(config.getString("repository.baseUrl", ""));
 			}
@@ -198,7 +203,6 @@ public class Diff2HtmlRunner {
 			System.out.println("Not HTML template file was provided. Using a default template.");
 			settings.setHtmlTemplate("DEFAULT");
 		}
-
 		return settings;
 	}
 
