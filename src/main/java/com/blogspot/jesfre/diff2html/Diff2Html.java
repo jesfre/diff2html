@@ -62,13 +62,21 @@ public class Diff2Html {
 	public String processDiff(String workingDirPath, String svnManagedFilePath, String diffPath) {
 		File afterChangesFile = new File(svnManagedFilePath);
 		File diffFile = new File(diffPath);
-		String fileName = FilenameUtils.getName(svnManagedFilePath);
-		// TODO generate new filename, if Java, remove extension, otherwise don't
+		DifferenceContent differenceContent = null;
+		try {
+			differenceContent = populateDifferences(afterChangesFile, diffFile);
+		} catch (Exception e1) {
+			System.out.println("Cannot collfrom ect differences content for file " + diffFile.getName() + " and "
+					+ afterChangesFile.getName());
+			e1.printStackTrace();
+		}
+
+		String fileName = differenceContent.getFileName();
 		String htmlFilePath = workingDirPath + SLASH + htmlFilenamePrefix + fileName + htmlFilenameSuffix + ".html";
 		File htmlFile = new File(htmlFilePath);
 		String htmlContent = null;
 		try {
-			htmlContent = this.toHtml(afterChangesFile, diffFile, svnManagedFilePath);
+			htmlContent = this.toHtml(afterChangesFile, differenceContent, svnManagedFilePath);
 		} catch (Exception e1) {
 			System.out.println("Cannot generate HTML diff content for file " + diffFile.getName() + " and " + afterChangesFile.getName());
 			e1.printStackTrace();
@@ -85,10 +93,9 @@ public class Diff2Html {
 		return htmlFile.getAbsolutePath();
 	}
 
-	private String toHtml(File javaFile, File diffFile, String workspaceFileLocation) throws IOException {
-		DifferenceContent difference = populateDifferences(javaFile, diffFile);
+	private String toHtml(File javaFile, DifferenceContent difference, String workspaceFileLocation) throws IOException {
 		String producedDate = DATE_FORMAT.format(new Date());
-		// TODO change the ".java". Use FileNameUtils.getExtension() and other logic instead of lokking specifically for Java files
+		// TODO change the ".java". Use FileNameUtils.getExtension() and other logic instead of looking specifically for Java files
 		String leftRev = workspaceFileLocation.replace(".java", "_" + difference.getLeftRevision() + ".java");
 		String rightRev = workspaceFileLocation.replace(".java", "_" + difference.getRightRevision() + ".java");
 
