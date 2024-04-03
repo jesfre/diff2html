@@ -83,6 +83,12 @@ public class Diff2HtmlRunner {
 					.exportLog(false)
 					.listModifiedFiles(true)
 					.analyzeUrl(repoUrl).extract();
+
+			if (logList.isEmpty()) {
+				System.err.println("Cannot find any files to analyze.");
+				System.exit(-1);
+			}
+
 			for(SvnLog log : logList) {
 				for(ModifiedFile mf : log.getModifiedFiles()) {
 					if(ArrayUtils.contains(OPERATIONS_TO_REVIEW, mf.getOperation())) {
