@@ -95,9 +95,15 @@ public class Diff2Html {
 
 	private String toHtml(File javaFile, DifferenceContent difference, String workspaceFileLocation) throws IOException {
 		String producedDate = DATE_FORMAT.format(new Date());
-		// TODO change the ".java". Use FileNameUtils.getExtension() and other logic instead of looking specifically for Java files
-		String leftRev = workspaceFileLocation.replace(".java", "_" + difference.getLeftRevision() + ".java");
-		String rightRev = workspaceFileLocation.replace(".java", "_" + difference.getRightRevision() + ".java");
+
+		String fullPath = FilenameUtils.getFullPath(workspaceFileLocation);
+		String baseName = FilenameUtils.getBaseName(difference.getFileName());
+		String extension = FilenameUtils.getExtension(difference.getFileName());
+		String leftFileName = baseName + "_" + difference.getLeftRevision() + "." + extension;
+		String rightFileName = baseName + "_" + difference.getRightRevision() + "." + extension;
+
+		String leftRevFullPath = FilenameUtils.concat(fullPath, leftFileName);
+		String rightRevFullPath = FilenameUtils.concat(fullPath, rightFileName);
 
 		String path;
 		String templateFilename;
@@ -118,8 +124,8 @@ public class Diff2Html {
 		Map<String, Object> context = new HashMap<String, Object>();
 		context.put("javaFileName", workspaceFileLocation);
 		context.put("produced", producedDate);
-		context.put("leftFile", leftRev);
-		context.put("rightFile", rightRev);
+		context.put("leftFile", leftRevFullPath);
+		context.put("rightFile", rightRevFullPath);
 		context.put("difference", difference);
 
 		VelocityTemplateProcessor templateProcessor = getProcessor(path);
