@@ -42,6 +42,8 @@ public class Diff2HtmlRunner {
 	private static final String DEFAULT_HTML_NAME_PREFIX = "";
 	private static final String DEFAULT_HTML_NAME_SUFFIX = "_Code_Diff";
 	private static final OperationType[] OPERATIONS_TO_REVIEW = {OperationType.ADDED, OperationType.MERGED, OperationType.MODIFIED, OperationType.UPDATED};
+	// TODO add valid file types to the configuration file
+	private static final String[] VALID_FILE_TYPES = { "java", "properties", "txt", "xml", "jsp", "js", "html", "css" };
 	private static final int MAX_MONTHS_SEARCH_IN_PAST = 12;
 
 	private static boolean cmdFileBasedExecution = false;
@@ -92,6 +94,14 @@ public class Diff2HtmlRunner {
 			for(SvnLog log : logList) {
 				for(ModifiedFile mf : log.getModifiedFiles()) {
 					if(ArrayUtils.contains(OPERATIONS_TO_REVIEW, mf.getOperation())) {
+						if (!ArrayUtils.contains(VALID_FILE_TYPES, FilenameUtils.getExtension(mf.getFile()))) {
+							// TODO check if this one works
+							// http://www.java2s.com/example/java/file-path-io/checks-whether-or-not-a-file-is-a-text-file-or-a-binary-one.html
+							// Instead of checking for valid file extensions
+							System.out.println("Invalid file type skipped: " + FilenameUtils.getName(mf.getFile()));
+							continue;
+						}
+
 						String fileUrlString = runnerSettings.getRepositoryBaseUrl() + "/" + mf.getFile();
 						URL fileUrl = new URL(fileUrlString).toURI().normalize().toURL();
 						runnerSettings.putAnalyzingFile(fileUrl.toString());
