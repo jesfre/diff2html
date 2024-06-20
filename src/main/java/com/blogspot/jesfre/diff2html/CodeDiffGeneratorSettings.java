@@ -21,6 +21,7 @@ public class CodeDiffGeneratorSettings {
 	private String workingDirPath;
 	private String commandFile;
 	private String reportOutputLocation;
+	private int searchRangeDays;
 	private Map<String, String> analyzingFileDiffFileMap = new HashMap<String, String>();
 
 	public String getConfigFile() {
@@ -119,6 +120,14 @@ public class CodeDiffGeneratorSettings {
 		this.reportOutputLocation = reportOutputLocation;
 	}
 
+	public int getSearchRangeDays() {
+		return searchRangeDays;
+	}
+
+	public void setSearchRangeDays(int rangeDays) {
+		this.searchRangeDays = rangeDays;
+	}
+
 	public Map<String, String> getAnalyzingFileDiffFileMap() {
 		return analyzingFileDiffFileMap;
 	}
@@ -162,6 +171,8 @@ public class CodeDiffGeneratorSettings {
 		builder.append(commandFile);
 		builder.append(", reportOutputLocation=");
 		builder.append(reportOutputLocation);
+		builder.append(", searchRangeDays=");
+		builder.append(searchRangeDays);
 		builder.append(", analyzingFileDiffFileMap=");
 		builder.append(analyzingFileDiffFileMap);
 		builder.append("]");

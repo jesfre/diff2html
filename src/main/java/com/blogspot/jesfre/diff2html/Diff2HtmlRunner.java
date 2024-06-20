@@ -44,7 +44,6 @@ public class Diff2HtmlRunner {
 	private static final OperationType[] OPERATIONS_TO_REVIEW = {OperationType.ADDED, OperationType.MERGED, OperationType.MODIFIED, OperationType.UPDATED};
 	// TODO add valid file types to the configuration file
 	private static final String[] VALID_FILE_TYPES = { "java", "properties", "txt", "xml", "jsp", "js", "html", "css" };
-	private static final int MAX_MONTHS_SEARCH_IN_PAST = 12;
 
 	private static boolean cmdFileBasedExecution = false;
 	private static boolean usingRepoUrl = false;
@@ -80,7 +79,7 @@ public class Diff2HtmlRunner {
 					.withComment(runnerSettings.getJiraTicket())
 					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
 					.verbose(runnerSettings.isVerbose())
-					.lookMonthsBack(MAX_MONTHS_SEARCH_IN_PAST)
+					.lookDaysBack(runnerSettings.getSearchRangeDays())
 					.clearTempFiles(true)
 					.exportLog(false)
 					.listModifiedFiles(true)
@@ -124,7 +123,7 @@ public class Diff2HtmlRunner {
 					.withComment(runnerSettings.getJiraTicket())
 					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
 					.verbose(runnerSettings.isVerbose())
-					.lookMonthsBack(MAX_MONTHS_SEARCH_IN_PAST)
+					.lookDaysBack(runnerSettings.getSearchRangeDays())
 					.clearTempFiles(true)
 					.exportLog(false)
 					.analyze(analyzedFile).extract();
@@ -191,6 +190,9 @@ public class Diff2HtmlRunner {
 			}
 			if(config.containsKey("global.overwriteFiles")) {
 				settings.setOverwriteFiles(config.getBoolean("global.overwriteFiles", false));
+			}
+			if (config.containsKey("repository.search.range.days")) {
+				settings.setSearchRangeDays(config.getInt("repository.search.range.days", 1));
 			}
 
 			if(config.containsKey("workingDirectory")) {
