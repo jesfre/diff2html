@@ -1,5 +1,6 @@
 package com.blogspot.jesfre.diff2html;
 
+@Deprecated
 public class DifferenceLine {
 	private BlockType blockType = BlockType.NO_BLOCK;
 	private DiffType diffType = DiffType.SAME;

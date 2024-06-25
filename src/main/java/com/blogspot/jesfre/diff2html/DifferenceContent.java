@@ -3,6 +3,7 @@ package com.blogspot.jesfre.diff2html;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class DifferenceContent {
 	private String fileName;
 	private long leftRevision;
