@@ -19,21 +19,13 @@ import com.blogspot.jesfre.svn.utils.diff.DifferenceContent;
 import com.blogspot.jesfre.velocity.utils.VelocityTemplateProcessor;
 
 /**
- * @author <a href="mailto:jorge.ruiz.aquino@gmail.com">Jorge Ruiz Aquino</a>
- * Feb 5, 2024
- */
+ * @author <a href="mailto:jorge.ruiz.aquino@gmail.com">Jorge Ruiz Aquino</a>
+ * Feb 5, 2024
+ */
 public class Diff2Html {
 
-	public static void main(String[] args) {
-		String workingDir = "/path/do/any/code-diff-generator/workingdirectory";
-		String file = new Diff2Html().processDiff(workingDir,
-				workingDir + "Sample.java",
-				workingDir + "Sample.diff");
-		System.out.println("Generated HTML: " + file);
-	}
-
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("d/M/yyyy h:m:s a");
-	private CodeDiffGeneratorSettings settings = null; 
+	private CodeDiffGeneratorSettings settings = null;
 	private String htmlFilenamePrefix = "";
 	private String htmlFilenameSuffix = "";
 
@@ -92,20 +84,11 @@ public class Diff2Html {
 		String leftRevFullPath = FilenameUtils.concat(fullPath, leftFileName);
 		String rightRevFullPath = FilenameUtils.concat(fullPath, rightFileName);
 
-		String path;
-		String templateFilename;
-		if("DEFAULT".equals(settings.getHtmlTemplate())) {
-			// TODO set default
-			path = DiffConstants.TEMPLATE_FOLDER;
-			templateFilename = "diff-template.html";
-			// TODO Load template from JAR. Add this option in the VelocityTemplateProcessor.
-		} else {
-			path = FilenameUtils.getFullPath(settings.getHtmlTemplate());
-			templateFilename = FilenameUtils.getName(settings.getHtmlTemplate());
-			if(StringUtils.isBlank(path)) {
-				// Will try to use a template file located in the same directory as the configuration file  
-				path = FilenameUtils.getPath(settings.getConfigFile());
-			}
+		String path = FilenameUtils.getFullPath(settings.getHtmlTemplate());
+		String templateFilename = FilenameUtils.getName(settings.getHtmlTemplate());
+		if(StringUtils.isBlank(path)) {
+			// Will try to use a template file located in the same directory as the configuration file  
+			path = FilenameUtils.getPath(settings.getConfigFile());
 		}
 
 		Map<String, Object> context = new HashMap<String, Object>();
