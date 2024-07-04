@@ -118,15 +118,20 @@ public class Diff2HtmlRunner {
 
 		// Using files from the configuration file
 		for (String analyzedFile : runnerSettings.getAnalyzingFileDiffFileMap().keySet()) {
-			List<SvnLog> logList = versionExtractor
-					// .withLimit(2)
-					.withComment(runnerSettings.getJiraTicket())
-					.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
-					.verbose(runnerSettings.isVerbose())
-					.lookDaysBack(runnerSettings.getSearchRangeDays())
-					.clearTempFiles(true)
-					.exportLog(false)
-					.analyze(analyzedFile).extract();
+			List<SvnLog> logList = new ArrayList<SvnLog>(); 
+			versionExtractor
+			// .withLimit(2)
+			.withComment(runnerSettings.getJiraTicket())
+			.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
+			.verbose(runnerSettings.isVerbose())
+			.lookDaysBack(runnerSettings.getSearchRangeDays())
+			.clearTempFiles(true)
+			.exportLog(false);
+			if(usingRepoUrl) {
+				logList = versionExtractor.analyzeUrl(new URL(analyzedFile)).extract();
+			} else {
+				logList = versionExtractor.analyze(analyzedFile).extract();
+			}
 
 			if(logList.size() == 0) {
 				System.err.println("No log found for " + analyzedFile + " using comment " + runnerSettings.getJiraTicket());
