@@ -24,6 +24,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 
 import com.blogspot.jesfre.commandline.CommandLineRunner;
@@ -33,9 +34,14 @@ import com.blogspot.jesfre.svn.utils.SvnDiff;
 import com.blogspot.jesfre.svn.utils.SvnExport;
 import com.blogspot.jesfre.svn.utils.SvnLog;
 import com.blogspot.jesfre.svn.utils.SvnLogExtractor;
+import com.blogspot.jesfre.svn.utils.diff.DiffType;
+import com.blogspot.jesfre.svn.utils.diff.DifferenceAnalyzer;
+import com.blogspot.jesfre.svn.utils.diff.DifferenceContent;
+import com.blogspot.jesfre.svn.utils.diff.DifferenceLine;
 
 public class Diff2HtmlRunner {
 
+	private static final String NBSP = "&nbsp;";
 	// ----------- SET -----------------------
 	private static final String BAT_FILENAME_TEMPLATE = "svn_diff_commands_%s.bat";
 	private static final String SVN_BASE_URL = "some SVN URL";
@@ -44,6 +50,7 @@ public class Diff2HtmlRunner {
 	private static final OperationType[] OPERATIONS_TO_REVIEW = {OperationType.ADDED, OperationType.MERGED, OperationType.MODIFIED, OperationType.UPDATED};
 	// TODO add valid file types to the configuration file
 	private static final String[] VALID_FILE_TYPES = { "java", "properties", "txt", "xml", "jsp", "js", "html", "css" };
+	// Non-leap year default
 
 	private static boolean cmdFileBasedExecution = false;
 	private static boolean usingRepoUrl = false;
@@ -81,7 +88,7 @@ public class Diff2HtmlRunner {
 					.verbose(runnerSettings.isVerbose())
 					.lookDaysBack(runnerSettings.getSearchRangeDays())
 					.clearTempFiles(true)
-					.exportLog(false)
+					.exportLog(false) // TODO make it configurable from properties
 					.listModifiedFiles(true)
 					.analyzeUrl(repoUrl).extract();
 
@@ -120,13 +127,13 @@ public class Diff2HtmlRunner {
 		for (String analyzedFile : runnerSettings.getAnalyzingFileDiffFileMap().keySet()) {
 			List<SvnLog> logList = new ArrayList<SvnLog>(); 
 			versionExtractor
-			// .withLimit(2)
-			.withComment(runnerSettings.getJiraTicket())
-			.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
-			.verbose(runnerSettings.isVerbose())
-			.lookDaysBack(runnerSettings.getSearchRangeDays())
-			.clearTempFiles(true)
-			.exportLog(false);
+				// .withLimit(2)
+				.withComment(runnerSettings.getJiraTicket())
+				.withExecutionMode(cmdFileBasedExecution ? COMMAND_FILE : DIRECT_COMMAND)
+				.verbose(runnerSettings.isVerbose())
+				.lookDaysBack(runnerSettings.getSearchRangeDays())
+				.clearTempFiles(true)
+				.exportLog(false);
 			if(usingRepoUrl) {
 				logList = versionExtractor.analyzeUrl(new URL(analyzedFile)).extract();
 			} else {
@@ -145,6 +152,57 @@ public class Diff2HtmlRunner {
 			diff2HtmlRunner.generateDiffFilesCommandFileDriven(runnerSettings, fileSvnLogMap);
 		} else {
 			diff2HtmlRunner.generateDiffFiles(runnerSettings, fileSvnLogMap, true);
+		}
+		
+		// Generate report of modified lines
+		System.out.println("Generating files with reported changes...");
+		for (Entry<String, String> e : runnerSettings.getAnalyzingFileDiffFileMap().entrySet()) {
+			File afterChangesFile = new File(e.getKey());
+			File diffFile = new File(e.getValue());
+			StringBuilder differencesContentString = new StringBuilder();
+			String fileName = null;
+			try {
+				DifferenceContent differenceContent = DifferenceAnalyzer.getDifferenceContent(afterChangesFile, diffFile);
+				if(differenceContent.getLines().size() == 0) {
+					differencesContentString.append(differenceContent.getFileName());
+					differencesContentString.append("\nNONE OR IS NEW FILE");
+				}
+				int lastPosition = 0;
+				for(DifferenceLine difference : differenceContent.getLines()) {
+					int newPosition = difference.getLeftLinePosition();
+					if((difference.getLeftText().equals(NBSP)) || difference.getDiffType() != DiffType.LEFT && difference.getDiffType() != DiffType.BOTH) {
+						continue;
+					}
+					if(lastPosition == 0) {
+						differencesContentString.append(differenceContent.getFileName())
+						.append("\nStarting at line ["+newPosition+"]")
+						.append("\n-----------------------");
+					}
+					if(lastPosition != 0 && lastPosition != newPosition && newPosition > lastPosition+1) {
+						// Not contiguous line number: Add extra blank line
+						differencesContentString.append("\n")
+						.append("\nStarting at line ["+newPosition+"]")
+						.append("\n-----------------------");
+					}
+					lastPosition = newPosition;
+					if(differencesContentString.length() > 0) {
+						differencesContentString.append("\n");
+					}
+					String identations = difference.getLeftIndentation().replaceAll(NBSP, " ");
+					String unescapedText = StringEscapeUtils.unescapeHtml(difference.getLeftText());
+					differencesContentString.append(identations + unescapedText);
+				}
+				fileName = differenceContent.getFileName();
+			} catch (Exception e1) {
+				System.out.println("Cannot collect differences content for file " + diffFile.getName() + " and "
+						+ afterChangesFile.getName());
+				e1.printStackTrace();
+			}
+			if(StringUtils.isNotBlank(fileName)) {
+				File fileModif = new File(runnerSettings.getWorkingDirPath() + "\\file-modifications\\" + fileName + "-modifications.txt");
+				FileUtils.writeStringToFile(fileModif, differencesContentString.toString());
+				System.out.println("Generated " + fileModif);
+			}
 		}
 
 		// Generate HTML files
