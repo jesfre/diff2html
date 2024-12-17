@@ -45,7 +45,7 @@ public class Diff2Html {
 		try {
 			differenceContent = DifferenceAnalyzer.getDifferenceContent(afterChangesFile, diffFile);
 		} catch (Exception e1) {
-			System.out.println("Cannot collfrom ect differences content for file " + diffFile.getName() + " and "
+			System.out.println("Cannot collect differences content for file " + diffFile.getName() + " and "
 					+ afterChangesFile.getName());
 			e1.printStackTrace();
 		}
